@@ -6,11 +6,10 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.c5inco.idea.RotatingGlobe
+import com.c5inco.idea.apps.colorpicker.ColorPicker
 import com.c5inco.idea.apps.lafdefaults.LafDefaults
 import com.c5inco.idea.plugin.intellij.SwingColors
 import com.intellij.openapi.project.Project
@@ -86,11 +85,7 @@ class MyToolWindowFactory : ToolWindowFactory {
                 .getInstance()
                 .createComponentPopupBuilder(
                     createComposeComponent {
-                        Box(
-                            contentAlignment = Alignment.Center
-                        ) {
-                            RotatingGlobe(Modifier.fillMaxSize(0.7f))
-                        }
+                        ColorPicker()
                     },
                     null
                 )
