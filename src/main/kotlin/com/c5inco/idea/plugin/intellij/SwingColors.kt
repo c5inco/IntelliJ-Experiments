@@ -2,12 +2,12 @@ package com.c5inco.idea.plugin.intellij
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
+import com.c5inco.idea.apps.colorpicker.asComposeColor
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.util.ui.UIUtil
 import javax.swing.UIManager
-import java.awt.Color as AWTColor
 
 interface SwingColors {
     val isDarcula: Boolean
@@ -78,7 +78,6 @@ private class SwingColorsImpl : SwingColors {
         _isDarculaState.value = getIsDarcula
     }
 
-    private val AWTColor.asComposeColor: Color get() = Color(red, green, blue, alpha)
     private fun getColor(key: String): Color = UIManager.getColor(key).asComposeColor
     private fun getEditorBackground(): Color {
         val currentScheme = EditorColorsManager.getInstance().schemeForCurrentUITheme

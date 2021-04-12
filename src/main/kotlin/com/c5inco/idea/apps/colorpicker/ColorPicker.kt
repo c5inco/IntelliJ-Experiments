@@ -14,7 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.InvertColors
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -25,13 +24,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
+import java.awt.Color as AWTColor
 
 @Composable
 fun ColorPicker(
+    initialColor: AWTColor = AWTColor.RED,
     onColorChange: (Color) -> Unit = {},
     onClose: () -> Unit = {}
 ) {
-    var activeColor by remember { mutableStateOf(Color.Red) }
+    var activeColor by remember { mutableStateOf(initialColor.asComposeColor) }
+
+    var (hue, saturation, brightness) = AWTColor.RGBtoHSB(initialColor.red, initialColor.green, initialColor.blue, null)
+    var activeHue = AWTColor(AWTColor.HSBtoRGB(hue, 1f, 1f)).asComposeColor
 
     Column(
         Modifier.fillMaxSize()
@@ -66,9 +70,6 @@ fun ColorPicker(
             }
         }
 
-        var offsetX by remember { mutableStateOf(0f) }
-        var offsetY by remember { mutableStateOf(0f) }
-
         Box(
             Modifier
                 .fillMaxWidth()
@@ -76,7 +77,7 @@ fun ColorPicker(
                 .background(Color.White)
                 .background(
                     Brush.horizontalGradient(
-                        colors = listOf(activeColor.copy(alpha = 0f), activeColor)
+                        colors = listOf(activeHue.copy(alpha = 0f), activeHue)
                     )
                 )
                 .background(
@@ -84,8 +85,10 @@ fun ColorPicker(
                         colors = listOf(Color.Black.copy(alpha = 0f), Color.Black)
                     )
                 ),
-            contentAlignment = Alignment.Center
         ) {
+            var offsetX by remember { mutableStateOf(saturation * 240) }
+            var offsetY by remember { mutableStateOf((1f - brightness)) }
+
             Column(
                 Modifier
                     .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
@@ -101,7 +104,7 @@ fun ColorPicker(
             ) { }
         }
 
-        Spacer(androidx.compose.ui.Modifier.height(20.dp))
+        Spacer(Modifier.height(20.dp))
 
         Row(
             Modifier
@@ -124,7 +127,7 @@ fun ColorPicker(
                 .border(1.dp, Color.Black.copy(alpha = 0.15f), RoundedCornerShape(percent = 50))
         ) { }
 
-        Spacer(androidx.compose.ui.Modifier.height(20.dp))
+        Spacer(Modifier.height(20.dp))
 
         Row(
             Modifier
@@ -133,13 +136,13 @@ fun ColorPicker(
                 .clip(RoundedCornerShape(percent = 50))
                 .background(
                     Brush.horizontalGradient(
-                        colors = listOf(activeColor.copy(alpha = 0f), activeColor)
+                        colors = listOf(activeHue.copy(alpha = 0f), activeHue)
                     )
                 )
                 .border(1.dp, Color.Black.copy(alpha = 0.15f), RoundedCornerShape(percent = 50))
         ) { }
 
-        Spacer(androidx.compose.ui.Modifier.height(20.dp))
+        Spacer(Modifier.height(20.dp))
 
         Divider()
 

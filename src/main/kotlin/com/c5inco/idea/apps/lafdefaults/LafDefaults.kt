@@ -12,20 +12,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.c5inco.idea.apps.colorpicker.ColorPicker
+import com.c5inco.idea.apps.colorpicker.asComposeColor
+import com.c5inco.idea.apps.colorpicker.toHex
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.application.ApplicationManager
 import javax.swing.UIManager
 import javax.swing.plaf.ColorUIResource
+import kotlin.math.floor
 import java.awt.Color as AWTColor
 
 @ExperimentalFoundationApi
 @Composable
 fun LafDefaults(isDarkTheme: Boolean) {
     var defaults by remember(isDarkTheme) { mutableStateOf(getLafDefaultsColors()) }
-
-    fun colorToColor(color: java.awt.Color): Color {
-        return Color(color.red, color.green, color.blue)
-    }
 
     defaults?.let {
         var filter by remember { mutableStateOf("") }
@@ -65,24 +64,32 @@ fun LafDefaults(isDarkTheme: Boolean) {
                                         "$key",
                                         color = MaterialTheme.colors.onSurface
                                     )
-                                    var showColorPicker by remember { mutableStateOf(false) }
-                                    Box {
-                                        Column(
-                                            Modifier
-                                                .clickable { showColorPicker = true }
-                                                .size(24.dp)
-                                                .background(colorToColor(color))
-                                                .border(1.dp, Color.Black.copy(alpha = 0.1f))
-                                        ) { }
-                                        DropdownMenu(
-                                            modifier = Modifier.size(width = 320.dp, height = 500.dp),
-                                            expanded = showColorPicker,
-                                            offset = DpOffset(x = 32.dp, y = (-24).dp),
-                                            onDismissRequest = {
-                                                showColorPicker = false
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            generateRgbaString(color)
+                                        )
+
+                                        var showColorPicker by remember { mutableStateOf(false) }
+                                        Box {
+                                            Column(
+                                                    Modifier
+                                                            .clickable { showColorPicker = true }
+                                                            .size(24.dp)
+                                                            .background(color.asComposeColor)
+                                                            .border(1.dp, Color.Black.copy(alpha = 0.1f))
+                                            ) { }
+                                            DropdownMenu(
+                                                    modifier = Modifier.size(width = 320.dp, height = 500.dp),
+                                                    expanded = showColorPicker,
+                                                    offset = DpOffset(x = 32.dp, y = (-24).dp),
+                                                    onDismissRequest = {
+                                                        showColorPicker = false
+                                                    }
+                                            ) {
+                                                ColorPicker(initialColor = color, onClose = { showColorPicker = false })
                                             }
-                                        ) {
-                                            ColorPicker(onClose = { showColorPicker = false })
                                         }
                                     }
                                 }
@@ -115,6 +122,14 @@ fun LafDefaults(isDarkTheme: Boolean) {
             }
         }
     }
+}
+
+fun generateRgbaString(color: AWTColor): String {
+    if (color.alpha < 255) {
+        val calcAlpha = color.alpha.toDouble() / 255.0
+        return "rgba(${color.red},${color.green},${color.blue},${floor(calcAlpha * 100) / 100}), #${toHex(color, true)}"
+    }
+    return "rgb(${color.red},${color.green},${color.blue}), #${toHex(color, false)}"
 }
 
 private fun getLafDefaultsColors(): Map<String, AWTColor> {
