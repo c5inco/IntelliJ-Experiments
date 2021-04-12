@@ -4,8 +4,6 @@ import androidx.compose.desktop.ComposePanel
 import androidx.compose.desktop.DesktopMaterialTheme
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.c5inco.idea.RotatingGlobe
+import com.c5inco.idea.apps.lafdefaults.LafDefaults
 import com.c5inco.idea.plugin.intellij.SwingColors
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder
@@ -24,7 +23,6 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import javax.swing.JComponent
-import javax.swing.UIManager
 
 
 @ExperimentalFoundationApi
@@ -72,79 +70,14 @@ class MyToolWindowFactory : ToolWindowFactory {
                             Button(onClick = { showPopup() }) {
                                 Text("color picker")
                             }
+
+                            Spacer(Modifier.height(32.dp))
+                            LafDefaults(swingColors.isDarcula)
                         }
-                        LafDefaults(swingColors.isDarcula)
                     }
                 }
             }
         }
-    }
-
-    @ExperimentalFoundationApi
-    @Composable
-    private fun LafDefaults(isDarkTheme: Boolean) {
-        var defaults by remember(isDarkTheme) { mutableStateOf(getLafDefaultsColors()) }
-
-        fun colorToColor(color: java.awt.Color): Color {
-            return Color(color.red, color.green, color.blue)
-        }
-
-        defaults?.let {
-            Box {
-                val state = rememberLazyListState()
-
-                LazyColumn(
-                    state = state
-                ) {
-                    defaults.forEach { (key, color) ->
-                        item {
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .height(32.dp)
-                                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    "$key",
-                                    color = MaterialTheme.colors.onSurface
-                                )
-                                Column(
-                                    Modifier
-                                        .size(24.dp)
-                                        .background(colorToColor(color))
-                                        .border(1.dp, Color.Black.copy(alpha = 0.1f))
-                                ) { }
-                            }
-                        }
-                    }
-                }
-
-                VerticalScrollbar(
-                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-                    adapter = rememberScrollbarAdapter(
-                        scrollState = state,
-                        itemCount = defaults.size,
-                        averageItemSize = 32.dp
-                    )
-                )
-            }
-        }
-    }
-
-    private fun getLafDefaultsColors(): Map<String, java.awt.Color> {
-        var defaults = UIManager.getDefaults().toMap()
-
-        defaults = defaults.filter { (_, v) ->
-            v is java.awt.Color
-        }
-        val sortedDefaults = mutableMapOf<String, java.awt.Color>()
-        defaults.map {
-            sortedDefaults[it.key!! as String] = it.value as java.awt.Color
-        }
-
-        return sortedDefaults.toSortedMap()
     }
 
     fun showPopup() {
