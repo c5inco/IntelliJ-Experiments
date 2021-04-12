@@ -23,8 +23,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.intellij.util.MathUtil.clamp
 import kotlin.math.roundToInt
 import java.awt.Color as AWTColor
+
+private const val PICKER_WIDTH = 240
+private const val PICKER_HEIGHT = 400
 
 @Composable
 fun ColorPicker(
@@ -38,7 +42,7 @@ fun ColorPicker(
     var activeHue = AWTColor(AWTColor.HSBtoRGB(hue, 1f, 1f)).asComposeColor
 
     Column(
-        Modifier.fillMaxSize()
+        Modifier.size(width = PICKER_WIDTH.dp, height = PICKER_HEIGHT.dp)
     ) {
         Row(
             Modifier
@@ -86,13 +90,19 @@ fun ColorPicker(
                     )
                 ),
         ) {
-            var offsetX by remember { mutableStateOf(saturation * 240) }
-            var offsetY by remember { mutableStateOf((1f - brightness)) }
+            val dotSize = 24
+            fun clampOffset(value: Float): Float {
+                var adj = value - dotSize / 2
+                return clamp(adj, (0 - dotSize / 2).toFloat(), (PICKER_WIDTH - dotSize / 2).toFloat())
+            }
+
+            var offsetX by remember { mutableStateOf(saturation * PICKER_WIDTH) }
+            var offsetY by remember { mutableStateOf((1f - brightness) * 240) }
 
             Column(
                 Modifier
-                    .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
-                    .size(24.dp)
+                    .offset { IntOffset(clampOffset(offsetX).roundToInt(), clampOffset(offsetY).roundToInt()) }
+                    .size(dotSize.dp)
                     .border(2.dp, Color.White, CircleShape)
                     .pointerInput(Unit) {
                         detectDragGestures { change, dragAmount ->

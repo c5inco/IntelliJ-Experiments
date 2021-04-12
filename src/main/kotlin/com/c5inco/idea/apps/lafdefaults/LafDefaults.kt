@@ -74,19 +74,18 @@ fun LafDefaults(isDarkTheme: Boolean) {
                                         var showColorPicker by remember { mutableStateOf(false) }
                                         Box {
                                             Column(
-                                                    Modifier
-                                                            .clickable { showColorPicker = true }
-                                                            .size(24.dp)
-                                                            .background(color.asComposeColor)
-                                                            .border(1.dp, Color.Black.copy(alpha = 0.1f))
+                                                Modifier
+                                                    .clickable { showColorPicker = true }
+                                                    .size(24.dp)
+                                                    .background(color.asComposeColor)
+                                                    .border(1.dp, Color.Black.copy(alpha = 0.1f))
                                             ) { }
                                             DropdownMenu(
-                                                    modifier = Modifier.size(width = 320.dp, height = 500.dp),
-                                                    expanded = showColorPicker,
-                                                    offset = DpOffset(x = 32.dp, y = (-24).dp),
-                                                    onDismissRequest = {
-                                                        showColorPicker = false
-                                                    }
+                                                expanded = showColorPicker,
+                                                offset = DpOffset(x = 32.dp, y = (-24).dp),
+                                                onDismissRequest = {
+                                                    showColorPicker = false
+                                                }
                                             ) {
                                                 ColorPicker(initialColor = color, onClose = { showColorPicker = false })
                                             }
