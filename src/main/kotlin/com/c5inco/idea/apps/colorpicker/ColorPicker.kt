@@ -3,7 +3,10 @@ package com.c5inco.idea.apps.colorpicker
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,8 +17,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.InvertColors
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.consumeAllChanges
@@ -38,8 +43,12 @@ fun ColorPicker(
 ) {
     var activeColor by remember { mutableStateOf(initialColor.asComposeColor) }
 
-    var (hue, saturation, brightness) = AWTColor.RGBtoHSB(initialColor.red, initialColor.green, initialColor.blue, null)
-    var activeHue = AWTColor(AWTColor.HSBtoRGB(hue, 1f, 1f)).asComposeColor
+    val (hue, saturation, brightness) = AWTColor.RGBtoHSB(initialColor.red, initialColor.green, initialColor.blue, null)
+
+    var activeHue by remember { mutableStateOf(hue) }
+    var opacity by remember { mutableStateOf(alphaInPercent(initialColor.alpha)) }
+
+    var spectrumHue = AWTColor(AWTColor.HSBtoRGB(activeHue, 1f, 1f)).asComposeColor
 
     Column(
         Modifier.size(width = PICKER_WIDTH.dp, height = PICKER_HEIGHT.dp)
@@ -81,7 +90,7 @@ fun ColorPicker(
                 .background(Color.White)
                 .background(
                     Brush.horizontalGradient(
-                        colors = listOf(activeHue.copy(alpha = 0f), activeHue)
+                        colors = listOf(spectrumHue.copy(alpha = 0f), spectrumHue)
                     )
                 )
                 .background(
@@ -116,41 +125,79 @@ fun ColorPicker(
 
         Spacer(Modifier.height(20.dp))
 
-        Row(
-            Modifier
-                .fillMaxWidth(0.75f)
-                .height(16.dp)
-                .clip(RoundedCornerShape(percent = 50))
-                .background(
-                    Brush.horizontalGradient(
-                        colors = listOf(
-                            Color.Red,
-                            Color.Yellow,
-                            Color.Green,
-                            Color.Cyan,
-                            Color.Blue,
-                            Color.Magenta,
-                            Color.Red
+        Box(
+            Modifier.width(200.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .height(16.dp)
+                    .clip(RoundedCornerShape(percent = 50))
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Red,
+                                Color.Yellow,
+                                Color.Green,
+                                Color.Cyan,
+                                Color.Blue,
+                                Color.Magenta,
+                                Color.Red
+                            )
                         )
                     )
-                )
-                .border(1.dp, Color.Black.copy(alpha = 0.15f), RoundedCornerShape(percent = 50))
-        ) { }
+                    .border(1.dp, Color.Black.copy(alpha = 0.15f), RoundedCornerShape(percent = 50))
+            ) { }
+
+            var offsetX by remember { mutableStateOf( activeHue * 200f) }
+            DraggableThumb(
+                Modifier
+                    .offset { IntOffset(clampOffset(offsetX, max = 200f, width = 8 + 8).roundToInt(), 0) }
+                    .draggable(
+                        orientation = Orientation.Horizontal,
+                        state = rememberDraggableState { delta ->
+                            offsetX += delta
+                            activeHue = clamp(offsetX / 200f, 0f, 1f)
+                        }
+                    ),
+                Size(8f, 20f)
+            )
+        }
 
         Spacer(Modifier.height(20.dp))
 
-        Row(
-            Modifier
-                .fillMaxWidth(0.75f)
-                .height(16.dp)
-                .clip(RoundedCornerShape(percent = 50))
-                .background(
-                    Brush.horizontalGradient(
-                        colors = listOf(activeHue.copy(alpha = 0f), activeHue)
+        Box(
+            Modifier.width(200.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .height(16.dp)
+                    .clip(RoundedCornerShape(percent = 50))
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(spectrumHue.copy(alpha = 0f), spectrumHue)
+                        )
                     )
-                )
-                .border(1.dp, Color.Black.copy(alpha = 0.15f), RoundedCornerShape(percent = 50))
-        ) { }
+                    .border(1.dp, Color.Black.copy(alpha = 0.15f), RoundedCornerShape(percent = 50))
+            ) { }
+
+            var offsetX by remember { mutableStateOf( opacity * 200f) }
+            DraggableThumb(
+                Modifier
+                    .offset { IntOffset(clampOffset(offsetX, max = 200f, width = 8 + 8).roundToInt(), 0) }
+                    .draggable(
+                        orientation = Orientation.Horizontal,
+                        state = rememberDraggableState { delta ->
+                            offsetX += delta
+                            opacity = clamp(offsetX / 200f, 0f, 1f)
+                        }
+                    ),
+                Size(8f, 20f)
+            )
+        }
 
         Spacer(Modifier.height(20.dp))
 
@@ -167,6 +214,30 @@ fun ColorPicker(
     }
 }
 
+fun hueInPercent(hue: Float): Float {
+    return hue / 360f * 100 / 100
+}
+
+fun alphaInPercent(alpha: Int): Float {
+    return (alpha.toDouble() / 255.0 * 100 / 100).toFloat()
+}
+
+@Composable
+fun DraggableThumb(
+    modifier: Modifier = Modifier,
+    size: Size
+) {
+    val (width, height) = size
+
+    Column(
+        modifier
+            .padding(4.dp)
+            .size(width = width.dp, height = height.dp)
+            .background(Color.White)
+            .border(1.dp, Color.Black, RoundedCornerShape(2.dp))
+    ) { }
+}
+
 @Composable
 fun ColorSwatch(color: Color) {
     Row(
@@ -179,4 +250,9 @@ fun ColorSwatch(color: Color) {
                 shape = RoundedCornerShape(2.dp)
             )
     ) { }
+}
+
+fun clampOffset(value: Float, min: Float = 0f, max: Float, width: Int): Float {
+    var adj = value - width / 2
+    return clamp(adj, (min - width / 2), (max - width / 2))
 }

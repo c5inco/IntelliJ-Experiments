@@ -13,6 +13,7 @@ import com.c5inco.idea.apps.colorpicker.ColorPicker
 import com.c5inco.idea.apps.colorpicker.WithoutTouchSlop
 import com.c5inco.idea.apps.lafdefaults.LafDefaults
 import com.c5inco.idea.plugin.intellij.SwingColors
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder
 import com.intellij.openapi.ui.popup.JBPopup
@@ -26,7 +27,7 @@ import javax.swing.JComponent
 
 
 @ExperimentalFoundationApi
-class MyToolWindowFactory : ToolWindowFactory {
+class MyToolWindowFactory : ToolWindowFactory, DumbAware {
     /**
      * Create the tool window content.
      *
