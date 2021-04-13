@@ -34,6 +34,8 @@ import java.awt.Color as AWTColor
 
 private const val PICKER_WIDTH = 240
 private const val PICKER_HEIGHT = 400
+private const val SPECTRUM_HEIGHT = 200
+private const val SLIDER_HEIGHT = 16
 
 @Composable
 fun ColorPicker(
@@ -41,12 +43,22 @@ fun ColorPicker(
     onColorChange: (Color) -> Unit = {},
     onClose: () -> Unit = {}
 ) {
-    var activeColor by remember { mutableStateOf(initialColor.asComposeColor) }
-
     val (hue, saturation, brightness) = AWTColor.RGBtoHSB(initialColor.red, initialColor.green, initialColor.blue, null)
-
     var activeHue by remember { mutableStateOf(hue) }
-    var opacity by remember { mutableStateOf(alphaInPercent(initialColor.alpha)) }
+    var activeSaturation by remember { mutableStateOf(saturation) }
+    var activeBrightness by remember { mutableStateOf(brightness) }
+    var activeOpacity by remember { mutableStateOf(alphaInPercent(initialColor.alpha)) }
+
+    var activeColor by remember(
+        activeHue,
+        activeSaturation,
+        activeBrightness,
+        activeOpacity
+    ) {
+        mutableStateOf(
+            Color(AWTColor.HSBtoRGB(activeHue, activeSaturation, activeBrightness)).copy(alpha = activeOpacity)
+        )
+    }
 
     var spectrumHue = AWTColor(AWTColor.HSBtoRGB(activeHue, 1f, 1f)).asComposeColor
 
@@ -86,7 +98,7 @@ fun ColorPicker(
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(240.dp)
+                .height(SPECTRUM_HEIGHT.dp)
                 .background(Color.White)
                 .background(
                     Brush.horizontalGradient(
@@ -105,8 +117,8 @@ fun ColorPicker(
                 return clamp(adj, (0 - dotSize / 2).toFloat(), (PICKER_WIDTH - dotSize / 2).toFloat())
             }
 
-            var offsetX by remember { mutableStateOf(saturation * PICKER_WIDTH) }
-            var offsetY by remember { mutableStateOf((1f - brightness) * 240) }
+            var offsetX by remember { mutableStateOf(activeSaturation * PICKER_WIDTH) }
+            var offsetY by remember { mutableStateOf((1f - activeBrightness) * SPECTRUM_HEIGHT) }
 
             Column(
                 Modifier
@@ -117,13 +129,15 @@ fun ColorPicker(
                         detectDragGestures { change, dragAmount ->
                             change.consumeAllChanges()
                             offsetX += dragAmount.x
+                            activeSaturation = clamp(offsetX / PICKER_WIDTH, 0f, 1f)
                             offsetY += dragAmount.y
+                            activeBrightness = clamp(offsetY / SPECTRUM_HEIGHT, 0f, 1f)
                         }
                     }
             ) { }
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(16.dp))
 
         Box(
             Modifier.width(200.dp),
@@ -132,7 +146,7 @@ fun ColorPicker(
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .height(16.dp)
+                    .height(SLIDER_HEIGHT.dp)
                     .clip(RoundedCornerShape(percent = 50))
                     .background(
                         Brush.horizontalGradient(
@@ -165,7 +179,7 @@ fun ColorPicker(
             )
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(8.dp))
 
         Box(
             Modifier.width(200.dp),
@@ -174,7 +188,7 @@ fun ColorPicker(
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .height(16.dp)
+                    .height(SLIDER_HEIGHT.dp)
                     .clip(RoundedCornerShape(percent = 50))
                     .background(
                         Brush.horizontalGradient(
@@ -184,7 +198,7 @@ fun ColorPicker(
                     .border(1.dp, Color.Black.copy(alpha = 0.15f), RoundedCornerShape(percent = 50))
             ) { }
 
-            var offsetX by remember { mutableStateOf( opacity * 200f) }
+            var offsetX by remember { mutableStateOf( activeOpacity * 200f) }
             DraggableThumb(
                 Modifier
                     .offset { IntOffset(clampOffset(offsetX, max = 200f, width = 8 + 8).roundToInt(), 0) }
@@ -192,17 +206,21 @@ fun ColorPicker(
                         orientation = Orientation.Horizontal,
                         state = rememberDraggableState { delta ->
                             offsetX += delta
-                            opacity = clamp(offsetX / 200f, 0f, 1f)
+                            activeOpacity = clamp(offsetX / 200f, 0f, 1f)
                         }
                     ),
                 Size(8f, 20f)
             )
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(16.dp))
 
         Divider()
 
+        Spacer(Modifier.height(16.dp))
+        fun toBaseTwo(fl: Float): Int { return (fl * 255).roundToInt() }
+        Text("${toBaseTwo(activeColor.red)}, ${toBaseTwo(activeColor.green)}, ${toBaseTwo(activeColor.blue)}, ${activeColor.alpha}")
+        Spacer(Modifier.height(16.dp))
         Row(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
