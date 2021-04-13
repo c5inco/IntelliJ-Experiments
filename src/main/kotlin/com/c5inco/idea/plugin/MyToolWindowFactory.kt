@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.c5inco.idea.apps.colorpicker.ColorPicker
+import com.c5inco.idea.apps.colorpicker.WithoutTouchSlop
 import com.c5inco.idea.apps.lafdefaults.LafDefaults
 import com.c5inco.idea.plugin.intellij.SwingColors
 import com.intellij.openapi.project.Project
@@ -85,7 +86,13 @@ class MyToolWindowFactory : ToolWindowFactory {
                 .getInstance()
                 .createComponentPopupBuilder(
                     createComposeComponent {
-                        ColorPicker()
+                        WithoutTouchSlop {
+                            Surface(
+                                modifier = Modifier.fillMaxSize(),
+                            ) {
+                                ColorPicker()
+                            }
+                        }
                     },
                     null
                 )
@@ -98,12 +105,7 @@ class MyToolWindowFactory : ToolWindowFactory {
             preferredSize = Dimension(150, 300)
             setContent {
                 Thread.currentThread().contextClassLoader = PluginAction::class.java.classLoader
-
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    content()
-                }
+                content()
             }
         }
     }

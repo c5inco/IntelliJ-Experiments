@@ -90,7 +90,7 @@ fun ColorPicker(
                     )
                 ),
         ) {
-            val dotSize = 24
+            val dotSize = 14
             fun clampOffset(value: Float): Float {
                 var adj = value - dotSize / 2
                 return clamp(adj, (0 - dotSize / 2).toFloat(), (PICKER_WIDTH - dotSize / 2).toFloat())

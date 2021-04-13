@@ -1,6 +1,10 @@
 package com.c5inco.idea.apps.colorpicker
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.compose.ui.platform.ViewConfiguration
 import java.awt.Color as AWTColor
 
 fun toHex(c: AWTColor, withAlpha: Boolean): String? {
@@ -16,3 +20,25 @@ fun toHex(c: AWTColor, withAlpha: Boolean): String? {
 }
 
 val AWTColor.asComposeColor: Color get() = Color(red, green, blue, alpha)
+
+@Composable
+fun WithoutTouchSlop(content: @Composable () -> Unit) {
+    fun ViewConfiguration.withoutTouchSlop() = object : ViewConfiguration {
+        override val longPressTimeoutMillis get() =
+            this@withoutTouchSlop.longPressTimeoutMillis
+
+        override val doubleTapTimeoutMillis get() =
+            this@withoutTouchSlop.doubleTapTimeoutMillis
+
+        override val doubleTapMinTimeMillis get() =
+            this@withoutTouchSlop.doubleTapMinTimeMillis
+
+        override val touchSlop: Float get() = 0f
+    }
+
+    CompositionLocalProvider(
+        LocalViewConfiguration provides LocalViewConfiguration.current.withoutTouchSlop()
+    ) {
+        content()
+    }
+}
