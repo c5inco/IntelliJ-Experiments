@@ -8,7 +8,6 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import com.c5inco.idea.apps.colorpicker.ColorPicker
 import com.c5inco.idea.apps.colorpicker.WithoutTouchSlop
 import com.c5inco.idea.apps.lafdefaults.LafDefaults
@@ -64,15 +63,10 @@ class MyToolWindowFactory : ToolWindowFactory, DumbAware {
                         color = Color(bgColor.red, bgColor.green, bgColor.blue)
                     ) {
                         Column {
-                            Button(onClick = { showPopup() }) {
-                                Text("popup")
-                            }
-                            Spacer(Modifier.height(32.dp))
-                            Button(onClick = { showPopup() }) {
-                                Text("color picker")
-                            }
-
-                            Spacer(Modifier.height(32.dp))
+                            // Spacer(Modifier.height(32.dp))
+                            // Button(onClick = { showPopup() }) {
+                            //     Text("color picker")
+                            // }
                             LafDefaults(swingColors.isDarcula)
                         }
                     }

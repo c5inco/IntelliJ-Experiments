@@ -3,6 +3,7 @@ package com.c5inco.idea.apps.lafdefaults
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -23,16 +24,61 @@ import java.awt.Color as AWTColor
 
 @ExperimentalFoundationApi
 @Composable
-fun LafDefaults(isDarkTheme: Boolean) {
+fun LafDefaults(
+    isDarkTheme: Boolean
+) {
     var defaults by remember(isDarkTheme) { mutableStateOf(getLafDefaultsColors()) }
 
     defaults?.let {
         var filter by remember { mutableStateOf("") }
-        val filteredResults = defaults.filter { (k, _) ->
-            k.toLowerCase().contains(filter.toLowerCase())
+        var groupByColor by remember { mutableStateOf(false )}
+        var onlyAlpha by remember { mutableStateOf(false )}
+
+        val filteredResults = defaults.filter { (k, v) ->
+            var include = k.toLowerCase().contains(filter.toLowerCase())
+            if (onlyAlpha) {
+                include && v.alpha < 255
+            } else {
+                include
+            }
         }
 
-        Column {
+        Column(
+            Modifier.padding(8.dp)
+        ) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = groupByColor,
+                        onCheckedChange = {
+                            groupByColor = it
+                        }
+                    )
+                    Text(
+                        "Group by color"
+                    )
+                }
+                Spacer(Modifier.width(20.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = onlyAlpha,
+                        onCheckedChange = {
+                            onlyAlpha = it
+                        }
+                    )
+                    Text(
+                        "Only alpha"
+                    )
+                }
+            }
+            Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = filter,
                 onValueChange = {
@@ -50,53 +96,33 @@ fun LafDefaults(isDarkTheme: Boolean) {
                         state = state,
                         contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp)
                     ) {
-                        filteredResults.forEach { (key, color) ->
-                            item {
-                                Row(
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .height(32.dp)
-                                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        "$key",
-                                        color = MaterialTheme.colors.onSurface
-                                    )
+                        if (groupByColor) {
+                            val groupedColors = transformToGroupedColorMap(filteredResults)
+
+                            groupedColors.forEach { (key, values) ->
+                                stickyHeader(key) {
                                     Row(
+                                        modifier = Modifier
+                                            .padding(horizontal = 8.dp)
+                                            .fillMaxWidth()
+                                            .height(32.dp)
+                                            .background(Color.Cyan),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text(
-                                            generateRgbaString(color)
-                                        )
-
-                                        var showColorPicker by remember { mutableStateOf(false) }
-                                        Box {
-                                            Column(
-                                                Modifier
-                                                    .clickable { showColorPicker = true }
-                                                    .size(24.dp)
-                                                    .background(color.asComposeColor)
-                                                    .border(1.dp, Color.Black.copy(alpha = 0.1f))
-                                            ) { }
-                                            DropdownMenu(
-                                                expanded = showColorPicker,
-                                                offset = DpOffset(x = 32.dp, y = (-24).dp),
-                                                onDismissRequest = {
-                                                    showColorPicker = false
-                                                }
-                                            ) {
-                                                ColorPicker(
-                                                    initialColor = color,
-                                                    onClose = { showColorPicker = false },
-                                                    onColorChange = {
-                                                        updateColor(key, ColorUIResource(AWTColor(it.red, it.green, it.blue, it.alpha)))
-                                                    }
-                                                )
-                                            }
-                                        }
+                                        Text(generateRgbaString(key))
+                                        Text("[${values.size}]")
                                     }
+                                }
+
+                                items(values) { colorResource ->
+                                    ColorResourceRow(colorResource.first, colorResource.second)
+                                }
+                            }
+                        } else {
+                            filteredResults.forEach { (key, color) ->
+                                item {
+                                    ColorResourceRow(key, color)
                                 }
                             }
                         }
@@ -109,7 +135,7 @@ fun LafDefaults(isDarkTheme: Boolean) {
                             .padding(horizontal = 0.dp, vertical = 4.dp),
                         adapter = rememberScrollbarAdapter(
                             scrollState = state,
-                            itemCount = defaults.size,
+                            itemCount = if (groupByColor) calculateAllItems(filteredResults) else filteredResults.size,
                             averageItemSize = 32.dp
                         )
                     )
@@ -123,6 +149,88 @@ fun LafDefaults(isDarkTheme: Boolean) {
                         Text("No colors found.", color = LocalContentColor.current.copy(alpha = ContentAlpha.disabled))
                         Spacer(Modifier.fillMaxHeight(0.4f))
                     }
+                }
+            }
+        }
+    }
+}
+
+private fun calculateAllItems(filteredResults: Map<String, AWTColor>): Int {
+    val groupedColors = transformToGroupedColorMap(filteredResults)
+    var count = groupedColors.size
+
+    groupedColors.forEach { (key, values) ->
+        count += values.size
+    }
+
+    return count
+}
+
+private fun transformToGroupedColorMap(
+    filteredResults: Map<String, AWTColor>
+): MutableMap<AWTColor, MutableList<Pair<String, AWTColor>>> {
+    val flatMap = filteredResults.flatMap { (k, v) ->
+        listOf(Pair(k, v))
+    }
+
+    val groupedColors = mutableMapOf<AWTColor, MutableList<Pair<String, AWTColor>>>()
+
+    flatMap.forEach {
+        val c = it.second
+        if (groupedColors.containsKey(c)) {
+            val current = groupedColors.getOrDefault(c, mutableListOf())
+            current.add(it)
+        } else {
+            groupedColors.set(c, mutableListOf(it))
+        }
+    }
+    return groupedColors
+}
+
+@Composable
+private fun ColorResourceRow(key: String, color: AWTColor) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .height(32.dp)
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            "$key",
+            color = MaterialTheme.colors.onSurface
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                generateRgbaString(color)
+            )
+
+            var showColorPicker by remember { mutableStateOf(false) }
+            Box {
+                Column(
+                    Modifier
+                        .clickable { showColorPicker = true }
+                        .size(24.dp)
+                        .background(color.asComposeColor)
+                        .border(1.dp, Color.Black.copy(alpha = 0.1f))
+                ) { }
+                DropdownMenu(
+                    expanded = showColorPicker,
+                    offset = DpOffset(x = 32.dp, y = (-24).dp),
+                    onDismissRequest = {
+                        showColorPicker = false
+                    }
+                ) {
+                    ColorPicker(
+                        initialColor = color,
+                        onClose = { showColorPicker = false },
+                        onColorChange = {
+                            updateColor(key, ColorUIResource(AWTColor(it.red, it.green, it.blue, it.alpha)))
+                        }
+                    )
                 }
             }
         }
