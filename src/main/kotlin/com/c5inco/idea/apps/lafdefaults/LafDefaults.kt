@@ -87,7 +87,13 @@ fun LafDefaults(isDarkTheme: Boolean) {
                                                     showColorPicker = false
                                                 }
                                             ) {
-                                                ColorPicker(initialColor = color, onClose = { showColorPicker = false })
+                                                ColorPicker(
+                                                    initialColor = color,
+                                                    onClose = { showColorPicker = false },
+                                                    onColorChange = {
+                                                        updateColor(key, ColorUIResource(AWTColor(it.red, it.green, it.blue, it.alpha)))
+                                                    }
+                                                )
                                             }
                                         }
                                     }
