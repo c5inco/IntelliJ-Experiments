@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.consumeAllChanges
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -40,6 +41,11 @@ fun ColorPicker(
     onColorChange: (Color) -> Unit = {},
     onClose: () -> Unit = {}
 ) {
+    val density = LocalDensity.current.density
+    fun Int.withDensity(): Float {
+        return this * density
+    }
+
     val (hue, saturation, brightness) = AWTColor.RGBtoHSB(initialColor.red, initialColor.green, initialColor.blue, null)
     var activeHue by remember { mutableStateOf(hue) }
     var activeSaturation by remember { mutableStateOf(saturation) }
@@ -92,8 +98,8 @@ fun ColorPicker(
             }
         }
 
-        var spectrumOffsetX by remember { mutableStateOf(activeSaturation * PICKER_WIDTH) }
-        var spectrumOffsetY by remember { mutableStateOf((1f - activeBrightness) * SPECTRUM_HEIGHT) }
+        var spectrumOffsetX by remember { mutableStateOf(activeSaturation * (PICKER_WIDTH.withDensity())) }
+        var spectrumOffsetY by remember { mutableStateOf((1f - activeBrightness) * (SPECTRUM_HEIGHT.withDensity())) }
 
         Box(
             Modifier
@@ -114,9 +120,9 @@ fun ColorPicker(
                     detectTapGestures(
                         onTap = {
                             spectrumOffsetX = it.x
-                            activeSaturation = clamp(it.x / PICKER_WIDTH, 0f, 1f)
+                            activeSaturation = clamp(it.x / (PICKER_WIDTH.withDensity()), 0f, 1f)
                             spectrumOffsetY = it.y
-                            activeBrightness = clamp(1f - it.y / SPECTRUM_HEIGHT, 0f, 1f)
+                            activeBrightness = clamp(1f - it.y / (SPECTRUM_HEIGHT.withDensity()), 0f, 1f)
                         }
                     )
                 },
@@ -126,8 +132,8 @@ fun ColorPicker(
             Column(
                 Modifier
                     .offset { IntOffset(
-                        clampOffset(spectrumOffsetX, max = PICKER_WIDTH.toFloat(), width = dotSize).roundToInt(),
-                        clampOffset(spectrumOffsetY, max = SPECTRUM_HEIGHT.toFloat(), width = dotSize).roundToInt()
+                        clampOffset(spectrumOffsetX, max = PICKER_WIDTH.withDensity(), width = dotSize.withDensity()).roundToInt(),
+                        clampOffset(spectrumOffsetY, max = SPECTRUM_HEIGHT.withDensity(), width = dotSize.withDensity()).roundToInt()
                     ) }
                     .size(dotSize.dp)
                     .border(2.dp, Color.White, CircleShape)
@@ -136,9 +142,9 @@ fun ColorPicker(
                             onDrag = { change, dragAmount ->
                                 change.consumeAllChanges()
                                 spectrumOffsetX += dragAmount.x
-                                activeSaturation = clamp(spectrumOffsetX / PICKER_WIDTH, 0f, 1f)
+                                activeSaturation = clamp(spectrumOffsetX / (PICKER_WIDTH.withDensity()), 0f, 1f)
                                 spectrumOffsetY += dragAmount.y
-                                activeBrightness = clamp(1f - spectrumOffsetY / SPECTRUM_HEIGHT, 0f, 1f)
+                                activeBrightness = clamp(1f - spectrumOffsetY / (SPECTRUM_HEIGHT.withDensity()), 0f, 1f)
                             }
                         )
                     }
@@ -151,7 +157,7 @@ fun ColorPicker(
             Modifier.width(200.dp),
             contentAlignment = Alignment.CenterStart
         ) {
-            var offsetX by remember { mutableStateOf( activeHue * 200f) }
+            var offsetX by remember { mutableStateOf( activeHue * 200.withDensity()) }
 
             Row(
                 Modifier
@@ -176,7 +182,7 @@ fun ColorPicker(
                         detectTapGestures(
                             onTap = {
                                 offsetX = it.x
-                                activeHue = clamp(it.x / 200f, 0f, 1f)
+                                activeHue = clamp(it.x / 200.withDensity(), 0f, 1f)
                             }
                         )
                     },
@@ -184,12 +190,12 @@ fun ColorPicker(
 
             DraggableThumb(
                 Modifier
-                    .offset { IntOffset(clampOffset(offsetX, max = 200f, width = 8 + 8).roundToInt(), 0) }
+                    .offset { IntOffset(clampOffset(offsetX, max = 200.withDensity(), width = (8 + 8).withDensity()).roundToInt(), 0) }
                     .draggable(
                         orientation = Orientation.Horizontal,
                         state = rememberDraggableState { delta ->
                             offsetX += delta
-                            activeHue = clamp(offsetX / 200f, 0f, 1f)
+                            activeHue = clamp(offsetX / 200.withDensity(), 0f, 1f)
                         }
                     ),
                 Size(8f, 20f)
@@ -202,7 +208,7 @@ fun ColorPicker(
             Modifier.width(200.dp),
             contentAlignment = Alignment.CenterStart
         ) {
-            var offsetX by remember { mutableStateOf( activeOpacity * 200f) }
+            var offsetX by remember { mutableStateOf( activeOpacity * 200.withDensity()) }
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -218,7 +224,7 @@ fun ColorPicker(
                         detectTapGestures(
                             onTap = {
                                 offsetX = it.x
-                                activeOpacity = clamp(it.x / 200f, 0f, 1f)
+                                activeOpacity = clamp(it.x / 200.withDensity(), 0f, 1f)
                             }
                         )
                     },
@@ -226,12 +232,12 @@ fun ColorPicker(
 
             DraggableThumb(
                 Modifier
-                    .offset { IntOffset(clampOffset(offsetX, max = 200f, width = 8 + 8).roundToInt(), 0) }
+                    .offset { IntOffset(clampOffset(offsetX, max = 200.withDensity(), width = (8 + 8).withDensity()).roundToInt(), 0) }
                     .draggable(
                         orientation = Orientation.Horizontal,
                         state = rememberDraggableState { delta ->
                             offsetX += delta
-                            activeOpacity = clamp(offsetX / 200f, 0f, 1f)
+                            activeOpacity = clamp(offsetX / 200.withDensity(), 0f, 1f)
                         }
                     ),
                 Size(8f, 20f)
@@ -301,7 +307,7 @@ fun ColorSwatch(color: Color) {
     ) { }
 }
 
-fun clampOffset(value: Float, min: Float = 0f, max: Float, width: Int): Float {
+fun clampOffset(value: Float, min: Float = 0f, max: Float, width: Float): Float {
     var adj = value - width / 2
     return clamp(adj, (min - width / 2), (max - width / 2))
 }
