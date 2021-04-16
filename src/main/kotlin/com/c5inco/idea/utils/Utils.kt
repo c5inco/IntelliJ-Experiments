@@ -5,7 +5,15 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.platform.ViewConfiguration
+import kotlin.math.*
 import java.awt.Color as AWTColor
+
+fun clamp(value: Float, min: Float, max: Float): Float {
+    if (min > max) {
+        throw IllegalArgumentException("$min>$max")
+    }
+    return min(max, max(value, min))
+}
 
 fun toHex(c: AWTColor, withAlpha: Boolean): String? {
     val R = Integer.toHexString(c.red)
