@@ -2,7 +2,7 @@ package com.c5inco.idea.plugin.intellij
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
-import com.c5inco.idea.apps.colorpicker.asComposeColor
+import com.c5inco.idea.utils.asComposeColor
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.EditorColorsManager

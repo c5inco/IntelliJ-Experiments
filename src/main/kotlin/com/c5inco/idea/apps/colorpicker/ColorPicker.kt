@@ -27,6 +27,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.c5inco.idea.utils.asComposeColor
+import com.c5inco.idea.utils.clamp
 import kotlin.math.roundToInt
 import java.awt.Color as AWTColor
 

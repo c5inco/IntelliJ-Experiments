@@ -1,4 +1,4 @@
-package com.c5inco.idea.apps.colorpicker
+package com.c5inco.idea.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider

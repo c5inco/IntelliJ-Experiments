@@ -9,7 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.c5inco.idea.apps.colorpicker.ColorPicker
-import com.c5inco.idea.apps.colorpicker.WithoutTouchSlop
+import com.c5inco.idea.utils.WithoutTouchSlop
 import com.c5inco.idea.apps.lafdefaults.LafDefaults
 import com.c5inco.idea.plugin.intellij.SwingColors
 import com.intellij.openapi.project.DumbAware

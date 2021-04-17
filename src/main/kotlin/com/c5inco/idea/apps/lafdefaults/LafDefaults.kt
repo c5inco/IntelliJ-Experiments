@@ -13,8 +13,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.c5inco.idea.apps.colorpicker.ColorPicker
-import com.c5inco.idea.apps.colorpicker.asComposeColor
-import com.c5inco.idea.apps.colorpicker.toHex
+import com.c5inco.idea.utils.asComposeColor
+import com.c5inco.idea.utils.toHex
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.application.ApplicationManager
 import javax.swing.UIManager
