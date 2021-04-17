@@ -26,11 +26,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.c5inco.idea.utils.clamp
+import com.c5inco.idea.components.TextInput
+import com.c5inco.idea.utils.clampInt
+import com.c5inco.idea.utils.clampFloat
 import com.github.ajalt.colormath.HSV
 import com.github.ajalt.colormath.RGB
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 
 private const val PICKER_WIDTH = 240
@@ -50,10 +50,10 @@ fun ColorPicker(
 
     val (h, s, v) = RGB(initialColor.red, initialColor.green, initialColor.blue).toHSV()
 
-    var activeHue by remember { mutableStateOf(h.toFloat()) }
-    var activeSaturation by remember { mutableStateOf(s.toFloat()/100) }
-    var activeBrightness by remember { mutableStateOf(v.toFloat()/100) }
-    var activeOpacity by remember { mutableStateOf(initialColor.alpha) }
+    var activeHue by remember { mutableStateOf(h) }
+    var activeSaturation by remember { mutableStateOf(s) }
+    var activeBrightness by remember { mutableStateOf(v) }
+    var activeOpacity by remember { mutableStateOf((initialColor.alpha * 100).toInt()) }
 
     var activeColor by remember(
         activeHue,
@@ -62,11 +62,11 @@ fun ColorPicker(
         activeOpacity
     ) {
         mutableStateOf(
-            Color(HSV(activeHue.toInt(), (activeSaturation * 100).toInt(), (activeBrightness * 100).toInt()).toRGB().toPackedInt()).copy(alpha = activeOpacity)
+            Color(HSV(activeHue, activeSaturation, activeBrightness).toRGB().toPackedInt()).copy(alpha = activeOpacity / 100f)
         )
     }
 
-    var spectrumHue = Color(HSV(activeHue.toInt(), 100, 100).toRGB().toPackedInt())
+    var spectrumHue = Color(HSV(activeHue, 100, 100).toRGB().toPackedInt())
 
     Column(
         Modifier.size(width = PICKER_WIDTH.dp, height = PICKER_HEIGHT.dp)
@@ -96,8 +96,8 @@ fun ColorPicker(
             }
         }
 
-        var spectrumOffsetX by remember { mutableStateOf(activeSaturation * (PICKER_WIDTH.withDensity())) }
-        var spectrumOffsetY by remember { mutableStateOf((1f - activeBrightness) * (SPECTRUM_HEIGHT.withDensity())) }
+        var spectrumOffsetX by remember(activeSaturation) { mutableStateOf(activeSaturation / 100f * (PICKER_WIDTH.withDensity())) }
+        var spectrumOffsetY by remember(activeBrightness) { mutableStateOf((1f - activeBrightness / 100f) * (SPECTRUM_HEIGHT.withDensity())) }
 
         Box(
             Modifier
@@ -118,10 +118,9 @@ fun ColorPicker(
                     detectTapGestures(
                         onTap = {
                             spectrumOffsetX = it.x
-                            activeSaturation = clamp(it.x / (PICKER_WIDTH.withDensity()), 0f, 1f)
+                            activeSaturation = (clampFloat(it.x / (PICKER_WIDTH.withDensity())) * 100).toInt()
                             spectrumOffsetY = it.y
-                            activeBrightness =
-                                clamp(1f - it.y / (SPECTRUM_HEIGHT.withDensity()), 0f, 1f)
+                            activeBrightness = (clampFloat(1f - it.y / (SPECTRUM_HEIGHT.withDensity())) * 100).toInt()
                         }
                     )
                 },
@@ -151,14 +150,9 @@ fun ColorPicker(
                             onDrag = { change, dragAmount ->
                                 change.consumeAllChanges()
                                 spectrumOffsetX += dragAmount.x
-                                activeSaturation =
-                                    clamp(spectrumOffsetX / (PICKER_WIDTH.withDensity()), 0f, 1f)
+                                activeSaturation = (clampFloat(spectrumOffsetX / (PICKER_WIDTH.withDensity())) * 100).toInt()
                                 spectrumOffsetY += dragAmount.y
-                                activeBrightness = clamp(
-                                    1f - spectrumOffsetY / (SPECTRUM_HEIGHT.withDensity()),
-                                    0f,
-                                    1f
-                                )
+                                activeBrightness = (clampFloat(1f - spectrumOffsetY / (SPECTRUM_HEIGHT.withDensity())) * 100).toInt()
                             }
                         )
                     }
@@ -189,8 +183,10 @@ fun ColorPicker(
 
             Column {
                 RangeSlider(
-                    Modifier.width(200.dp).height(24.dp),
-                    activeHue / 360,
+                    Modifier
+                        .width(200.dp)
+                        .height(24.dp),
+                    activeHue / 360f,
                     Brush.horizontalGradient(
                         colors = listOf(
                             Color.Red,
@@ -203,39 +199,73 @@ fun ColorPicker(
                         )
                     ),
                     onValueChange = {
-                        activeHue = it * 360
+                        activeHue = (it * 360).toInt()
                     }
                 )
 
                 Spacer(Modifier.height(8.dp))
 
                 RangeSlider(
-                    Modifier.width(200.dp).height(24.dp),
-                    activeOpacity,
+                    Modifier
+                        .width(200.dp)
+                        .height(24.dp),
+                    activeOpacity / 100f,
                     Brush.horizontalGradient(
-                        colors = listOf(activeColor.copy(alpha = 0f), activeColor)
+                        colors = listOf(activeColor.copy(alpha = 0f), activeColor.copy(alpha = 1f))
                     ),
                     onValueChange = {
-                        activeOpacity = it
+                        activeOpacity = (it * 100).toInt()
                     }
                 )
             }
         }
+        Spacer(Modifier.height(8.dp))
 
-
-
-        Spacer(Modifier.height(16.dp))
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            TextInput(
+                modifier = Modifier.weight(1f),
+                value = activeOpacity,
+                convert = { it.toIntOrNull() }
+            ) {
+                activeOpacity = clampInt(it ?: activeOpacity, 0, 100)
+            }
+            TextInput(
+                modifier = Modifier.weight(1f),
+                value = activeHue,
+                convert = { it.toIntOrNull() }
+            ) {
+                activeHue = clampInt(it ?: activeHue, max = 360)
+            }
+            TextInput(
+                modifier = Modifier.weight(1f),
+                value = activeSaturation,
+                convert = { it.toIntOrNull() }
+            ) {
+                activeSaturation = clampInt(it ?: activeSaturation)
+            }
+            TextInput(
+                modifier = Modifier.weight(1f),
+                value = activeBrightness,
+                convert = { it.toIntOrNull() }
+            ) {
+                activeBrightness = clampInt(it ?: activeBrightness)
+            }
+        }
 
         Divider()
 
         Spacer(Modifier.height(16.dp))
         fun toBaseTwo(fl: Float): Int { return (fl * 255).roundToInt() }
         Text("${toBaseTwo(activeColor.red)}, ${toBaseTwo(activeColor.green)}, ${toBaseTwo(activeColor.blue)}, ${activeColor.alpha}")
-        Text("${HSV(h, s, v).toRGB()}")
-        Text("$activeHue")
+        //Text("$activeHue")
         Text("$activeSaturation")
         Text("$activeBrightness")
-        Text("$activeOpacity")
+        //Text("$activeOpacity")
+        Text("X: $spectrumOffsetX")
+        Text("Y: $spectrumOffsetY")
 
         Spacer(Modifier.height(16.dp))
         Row(
@@ -270,7 +300,7 @@ private fun RangeSlider(
         contentAlignment = Alignment.CenterStart
     ) {
         val widthAsPx = maxWidth.value * density
-        var offsetX by remember { mutableStateOf(value * widthAsPx) }
+        var offsetX by remember(value) { mutableStateOf(value * widthAsPx) }
 
         Canvas(
             modifier = Modifier
@@ -289,7 +319,7 @@ private fun RangeSlider(
                     detectTapGestures(
                         onTap = {
                             offsetX = it.x
-                            onValueChange(clamp(it.x / widthAsPx, 0f, 1f))
+                            onValueChange(clampFloat(it.x / widthAsPx, 0f, 1f))
                         }
                     )
                 },
@@ -316,7 +346,7 @@ private fun RangeSlider(
                     orientation = Orientation.Horizontal,
                     state = rememberDraggableState { delta ->
                         offsetX += delta
-                        onValueChange(clamp(offsetX / widthAsPx, 0f, 1f))
+                        onValueChange(clampFloat(offsetX / widthAsPx))
                     }
                 ),
             Size(8f, maxHeight.value - 4)
@@ -367,5 +397,5 @@ fun ColorSwatch(color: Color) {
 
 fun clampOffset(value: Float, min: Float = 0f, max: Float, width: Float): Float {
     var adj = value - width / 2
-    return clamp(adj, (min - width / 2), (max - width / 2))
+    return clampFloat(adj, (min - width / 2), (max - width / 2))
 }

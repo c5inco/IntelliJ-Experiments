@@ -8,7 +8,14 @@ import androidx.compose.ui.platform.ViewConfiguration
 import kotlin.math.*
 import java.awt.Color as AWTColor
 
-fun clamp(value: Float, min: Float, max: Float): Float {
+fun clampFloat(value: Float, min: Float = 0f, max: Float = 1f): Float {
+    if (min > max) {
+        throw IllegalArgumentException("$min>$max")
+    }
+    return min(max, max(value, min))
+}
+
+fun clampInt(value: Int, min: Int = 0, max: Int = 100): Int {
     if (min > max) {
         throw IllegalArgumentException("$min>$max")
     }
