@@ -225,7 +225,7 @@ private fun ColorResourceRow(key: String, color: AWTColor) {
                     }
                 ) {
                     ColorPicker(
-                        initialColor = color,
+                        initialColor = color.asComposeColor,
                         onClose = { showColorPicker = false },
                         onColorChange = {
                             updateColor(key, ColorUIResource(AWTColor(it.red, it.green, it.blue, it.alpha)))

@@ -20,6 +20,7 @@ repositories {
 dependencies {
     implementation(compose.desktop.currentOs)
     implementation(compose.materialIconsExtended)
+    implementation("com.github.ajalt.colormath:colormath:2.0.0")
 }
 
 tasks.withType<KotlinCompile>() {
