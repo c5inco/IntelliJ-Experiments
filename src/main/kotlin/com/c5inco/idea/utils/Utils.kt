@@ -48,7 +48,7 @@ fun WithoutTouchSlop(content: @Composable () -> Unit) {
         override val doubleTapMinTimeMillis get() =
             this@withoutTouchSlop.doubleTapMinTimeMillis
 
-        override val touchSlop: Float get() = 0f
+        override val touchSlop: Float get() = 0.01f
     }
 
     CompositionLocalProvider(

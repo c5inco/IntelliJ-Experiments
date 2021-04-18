@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.c5inco.idea.components.TextInput
+import com.c5inco.idea.utils.WithoutTouchSlop
 import com.c5inco.idea.utils.clampInt
 import com.c5inco.idea.utils.clampFloat
 import com.github.ajalt.colormath.HSV
@@ -99,159 +100,164 @@ fun ColorPicker(
         var spectrumOffsetX by remember(activeSaturation) { mutableStateOf(activeSaturation / 100f * (PICKER_WIDTH.withDensity())) }
         var spectrumOffsetY by remember(activeBrightness) { mutableStateOf((1f - activeBrightness / 100f) * (SPECTRUM_HEIGHT.withDensity())) }
 
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(SPECTRUM_HEIGHT.dp)
-                .background(Color.White)
-                .background(
-                    Brush.horizontalGradient(
-                        colors = listOf(spectrumHue.copy(alpha = 0f), spectrumHue)
-                    )
-                )
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color.Black.copy(alpha = 0f), Color.Black)
-                    )
-                )
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onTap = {
-                            spectrumOffsetX = it.x
-                            activeSaturation = (clampFloat(it.x / (PICKER_WIDTH.withDensity())) * 100).toInt()
-                            spectrumOffsetY = it.y
-                            activeBrightness = (clampFloat(1f - it.y / (SPECTRUM_HEIGHT.withDensity())) * 100).toInt()
-                        }
-                    )
-                },
-        ) {
-            val dotSize = 14
-
-            Column(
+        WithoutTouchSlop {
+            Box(
                 Modifier
-                    .offset {
-                        IntOffset(
-                            clampOffset(
-                                spectrumOffsetX,
-                                max = PICKER_WIDTH.withDensity(),
-                                width = dotSize.withDensity()
-                            ).roundToInt(),
-                            clampOffset(
-                                spectrumOffsetY,
-                                max = SPECTRUM_HEIGHT.withDensity(),
-                                width = dotSize.withDensity()
-                            ).roundToInt()
+                    .fillMaxWidth()
+                    .height(SPECTRUM_HEIGHT.dp)
+                    .background(Color.White)
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(spectrumHue.copy(alpha = 0f), spectrumHue)
                         )
-                    }
-                    .size(dotSize.dp)
-                    .border(2.dp, Color.White, CircleShape)
+                    )
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Black.copy(alpha = 0f), Color.Black)
+                        )
+                    )
                     .pointerInput(Unit) {
-                        detectDragGestures(
-                            onDrag = { change, dragAmount ->
-                                change.consumeAllChanges()
-                                spectrumOffsetX += dragAmount.x
-                                activeSaturation = (clampFloat(spectrumOffsetX / (PICKER_WIDTH.withDensity())) * 100).toInt()
-                                spectrumOffsetY += dragAmount.y
-                                activeBrightness = (clampFloat(1f - spectrumOffsetY / (SPECTRUM_HEIGHT.withDensity())) * 100).toInt()
+                        detectTapGestures(
+                            onTap = {
+                                spectrumOffsetX = it.x
+                                activeSaturation = (clampFloat(it.x / (PICKER_WIDTH.withDensity())) * 100).toInt()
+                                spectrumOffsetY = it.y
+                                activeBrightness =
+                                    (clampFloat(1f - it.y / (SPECTRUM_HEIGHT.withDensity())) * 100).toInt()
                             }
                         )
-                    }
-            ) { }
-        }
+                    },
+            ) {
+                val dotSize = 14
 
-        Spacer(Modifier.height(16.dp))
+                Column(
+                    Modifier
+                        .offset {
+                            IntOffset(
+                                clampOffset(
+                                    spectrumOffsetX,
+                                    max = PICKER_WIDTH.withDensity(),
+                                    width = dotSize.withDensity()
+                                ).roundToInt(),
+                                clampOffset(
+                                    spectrumOffsetY,
+                                    max = SPECTRUM_HEIGHT.withDensity(),
+                                    width = dotSize.withDensity()
+                                ).roundToInt()
+                            )
+                        }
+                        .size(dotSize.dp)
+                        .border(2.dp, Color.White, CircleShape)
+                        .pointerInput(Unit) {
+                            detectDragGestures(
+                                onDrag = { change, dragAmount ->
+                                    change.consumeAllChanges()
+                                    spectrumOffsetX += dragAmount.x
+                                    activeSaturation =
+                                        (clampFloat(spectrumOffsetX / (PICKER_WIDTH.withDensity())) * 100).toInt()
+                                    spectrumOffsetY += dragAmount.y
+                                    activeBrightness =
+                                        (clampFloat(1f - spectrumOffsetY / (SPECTRUM_HEIGHT.withDensity())) * 100).toInt()
+                                }
+                            )
+                        }
+                ) { }
+            }
 
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
+            Spacer(Modifier.height(16.dp))
+
+            Row(
                 Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .border(
-                        width = 1.dp,
-                        color = Color.Black.copy(alpha = 0.15f),
-                        shape = CircleShape
-                    )
-                    .background(activeColor)
-            ) {}
-
-            Spacer(Modifier.width(20.dp))
-
-            Column {
-                RangeSlider(
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
                     Modifier
-                        .width(200.dp)
-                        .height(24.dp),
-                    activeHue / 360f,
-                    Brush.horizontalGradient(
-                        colors = listOf(
-                            Color.Red,
-                            Color.Yellow,
-                            Color.Green,
-                            Color.Cyan,
-                            Color.Blue,
-                            Color.Magenta,
-                            Color.Red
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .border(
+                            width = 1.dp,
+                            color = Color.Black.copy(alpha = 0.15f),
+                            shape = CircleShape
                         )
-                    ),
-                    onValueChange = {
-                        activeHue = (it * 360).toInt()
-                    }
-                )
+                        .background(activeColor)
+                ) {}
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.width(20.dp))
 
-                RangeSlider(
-                    Modifier
-                        .width(200.dp)
-                        .height(24.dp),
-                    activeOpacity / 100f,
-                    Brush.horizontalGradient(
-                        colors = listOf(activeColor.copy(alpha = 0f), activeColor.copy(alpha = 1f))
-                    ),
-                    onValueChange = {
-                        activeOpacity = (it * 100).toInt()
-                    }
-                )
-            }
-        }
-        Spacer(Modifier.height(8.dp))
+                Column {
+                    RangeSlider(
+                        Modifier
+                            .width(200.dp)
+                            .height(24.dp),
+                        activeHue / 360f,
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Red,
+                                Color.Yellow,
+                                Color.Green,
+                                Color.Cyan,
+                                Color.Blue,
+                                Color.Magenta,
+                                Color.Red
+                            )
+                        ),
+                        onValueChange = {
+                            activeHue = (it * 360).toInt()
+                        }
+                    )
 
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            TextInput(
-                modifier = Modifier.weight(1f),
-                value = activeOpacity,
-                convert = { it.toIntOrNull() }
-            ) {
-                activeOpacity = clampInt(it ?: activeOpacity, 0, 100)
+                    Spacer(Modifier.height(8.dp))
+
+                    RangeSlider(
+                        Modifier
+                            .width(200.dp)
+                            .height(24.dp),
+                        activeOpacity / 100f,
+                        Brush.horizontalGradient(
+                            colors = listOf(activeColor.copy(alpha = 0f), activeColor.copy(alpha = 1f))
+                        ),
+                        onValueChange = {
+                            activeOpacity = (it * 100).toInt()
+                        }
+                    )
+                }
             }
-            TextInput(
-                modifier = Modifier.weight(1f),
-                value = activeHue,
-                convert = { it.toIntOrNull() }
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                activeHue = clampInt(it ?: activeHue, max = 360)
-            }
-            TextInput(
-                modifier = Modifier.weight(1f),
-                value = activeSaturation,
-                convert = { it.toIntOrNull() }
-            ) {
-                activeSaturation = clampInt(it ?: activeSaturation)
-            }
-            TextInput(
-                modifier = Modifier.weight(1f),
-                value = activeBrightness,
-                convert = { it.toIntOrNull() }
-            ) {
-                activeBrightness = clampInt(it ?: activeBrightness)
+                TextInput(
+                    modifier = Modifier.weight(1f),
+                    value = activeOpacity,
+                    convert = { it.toIntOrNull() }
+                ) {
+                    activeOpacity = clampInt(it ?: activeOpacity, 0, 100)
+                }
+                TextInput(
+                    modifier = Modifier.weight(1f),
+                    value = activeHue,
+                    convert = { it.toIntOrNull() }
+                ) {
+                    activeHue = clampInt(it ?: activeHue, max = 360)
+                }
+                TextInput(
+                    modifier = Modifier.weight(1f),
+                    value = activeSaturation,
+                    convert = { it.toIntOrNull() }
+                ) {
+                    activeSaturation = clampInt(it ?: activeSaturation)
+                }
+                TextInput(
+                    modifier = Modifier.weight(1f),
+                    value = activeBrightness,
+                    convert = { it.toIntOrNull() }
+                ) {
+                    activeBrightness = clampInt(it ?: activeBrightness)
+                }
             }
         }
 
