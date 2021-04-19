@@ -50,7 +50,7 @@ fun ColorPicker(
     fun Int.withDensity(): Float {
         return this * density
     }
-    var displayInRGB by remember { mutableStateOf(false) }
+    var displayInRGB by remember { mutableStateOf(true) }
 
     val initialRGB = RGB(initialColor.red, initialColor.green, initialColor.blue)
     val (h, s, v) = initialRGB.toHSV()
@@ -67,21 +67,12 @@ fun ColorPicker(
         activeHue,
         activeSaturation,
         activeBrightness,
-        activeRed,
-        activeGreen,
-        activeBlue,
         activeOpacity
     ) {
         mutableStateOf(
-            if (displayInRGB) {
-                Color(
-                    RGB(activeRed, activeGreen, activeBlue).toPackedInt()
-                ).copy(alpha = activeOpacity / 100f)
-            } else {
-                Color(
-                    HSV(activeHue, activeSaturation, activeBrightness).toRGB().toPackedInt()
-                ).copy(alpha = activeOpacity / 100f)
-            }
+            Color(
+                HSV(activeHue, activeSaturation, activeBrightness).toRGB().toPackedInt()
+            ).copy(alpha = activeOpacity / 100f)
         )
     }
 
@@ -94,7 +85,7 @@ fun ColorPicker(
 
     fun updateHSV() {
         val (h, s, v) = RGB(activeRed, activeGreen, activeBlue).toHSV()
-        activeHue = h
+        activeHue = if (h == 0 || h == 360) activeHue else h
         activeSaturation = s
         activeBrightness = v
     }
@@ -361,7 +352,7 @@ fun ColorPicker(
                     }
                 ) {
                     val (h, s, v, a) = RGB(it).toHSV()
-                    activeHue = h
+                    activeHue = if (h == 0 || h == 360) activeHue else h
                     activeSaturation = s
                     activeBrightness = v
                     activeOpacity = (a * 100).toInt()
