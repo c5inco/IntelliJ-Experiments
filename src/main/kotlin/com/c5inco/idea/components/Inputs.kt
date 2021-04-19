@@ -1,10 +1,8 @@
 package com.c5inco.idea.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.MaterialTheme
@@ -23,7 +21,6 @@ import androidx.compose.ui.unit.dp
 fun <T> TextInput(
     modifier: Modifier = Modifier,
     value: T,
-    label: @Composable () -> Unit = {},
     convert: (String) -> T,
     onValueChange: (T) -> Unit
 ) {
@@ -55,10 +52,8 @@ fun <T> TextInput(
                 modifier = Modifier
                     .border(width = 1.dp, color = getBorderColor())
                     .padding(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                label()
                 innerTextField()
             }
         },

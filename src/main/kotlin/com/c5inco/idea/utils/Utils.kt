@@ -5,6 +5,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.platform.ViewConfiguration
+import com.github.ajalt.colormath.RGB
 import kotlin.math.*
 import java.awt.Color as AWTColor
 
@@ -35,6 +36,14 @@ fun toHex(c: AWTColor, withAlpha: Boolean): String? {
 }
 
 val AWTColor.asComposeColor: Color get() = Color(red, green, blue, alpha)
+
+val Color.asHex: String get() {
+    val hex = RGB(red, green, blue, alpha).toHex(withNumberSign = false)
+    if (hex.length == 8) {
+        return hex.substring(6 until hex.length) + hex.substring(0 until 6)
+    }
+    return hex
+}
 
 @Composable
 fun WithoutTouchSlop(content: @Composable () -> Unit) {

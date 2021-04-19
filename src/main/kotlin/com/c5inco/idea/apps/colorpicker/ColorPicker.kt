@@ -24,10 +24,12 @@ import androidx.compose.ui.input.pointer.consumeAllChanges
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.c5inco.idea.components.TextInput
 import com.c5inco.idea.utils.WithoutTouchSlop
+import com.c5inco.idea.utils.asHex
 import com.c5inco.idea.utils.clampInt
 import com.c5inco.idea.utils.clampFloat
 import com.github.ajalt.colormath.HSV
@@ -48,23 +50,53 @@ fun ColorPicker(
     fun Int.withDensity(): Float {
         return this * density
     }
+    var displayInRGB by remember { mutableStateOf(false) }
 
-    val (h, s, v) = RGB(initialColor.red, initialColor.green, initialColor.blue).toHSV()
+    val initialRGB = RGB(initialColor.red, initialColor.green, initialColor.blue)
+    val (h, s, v) = initialRGB.toHSV()
 
     var activeHue by remember { mutableStateOf(h) }
     var activeSaturation by remember { mutableStateOf(s) }
     var activeBrightness by remember { mutableStateOf(v) }
+    var activeRed by remember { mutableStateOf((initialColor.red * 255).toInt()) }
+    var activeGreen by remember { mutableStateOf((initialColor.green * 255).toInt()) }
+    var activeBlue by remember { mutableStateOf((initialColor.blue * 255).toInt()) }
     var activeOpacity by remember { mutableStateOf((initialColor.alpha * 100).toInt()) }
 
     var activeColor by remember(
         activeHue,
         activeSaturation,
         activeBrightness,
+        activeRed,
+        activeGreen,
+        activeBlue,
         activeOpacity
     ) {
         mutableStateOf(
-            Color(HSV(activeHue, activeSaturation, activeBrightness).toRGB().toPackedInt()).copy(alpha = activeOpacity / 100f)
+            if (displayInRGB) {
+                Color(
+                    RGB(activeRed, activeGreen, activeBlue).toPackedInt()
+                ).copy(alpha = activeOpacity / 100f)
+            } else {
+                Color(
+                    HSV(activeHue, activeSaturation, activeBrightness).toRGB().toPackedInt()
+                ).copy(alpha = activeOpacity / 100f)
+            }
         )
+    }
+
+    fun updateRGB() {
+        val (r, g, b) = HSV(activeHue, activeSaturation, activeBrightness).toRGB()
+        activeRed = r
+        activeGreen = g
+        activeBlue = b
+    }
+
+    fun updateHSV() {
+        val (h, s, v) = RGB(activeRed, activeGreen, activeBlue).toHSV()
+        activeHue = h
+        activeSaturation = s
+        activeBrightness = v
     }
 
     var spectrumHue = Color(HSV(activeHue, 100, 100).toRGB().toPackedInt())
@@ -122,8 +154,8 @@ fun ColorPicker(
                                 spectrumOffsetX = it.x
                                 activeSaturation = (clampFloat(it.x / (PICKER_WIDTH.withDensity())) * 100).toInt()
                                 spectrumOffsetY = it.y
-                                activeBrightness =
-                                    (clampFloat(1f - it.y / (SPECTRUM_HEIGHT.withDensity())) * 100).toInt()
+                                activeBrightness = (clampFloat(1f - it.y / (SPECTRUM_HEIGHT.withDensity())) * 100).toInt()
+                                updateRGB()
                             }
                         )
                     },
@@ -153,11 +185,10 @@ fun ColorPicker(
                                 onDrag = { change, dragAmount ->
                                     change.consumeAllChanges()
                                     spectrumOffsetX += dragAmount.x
-                                    activeSaturation =
-                                        (clampFloat(spectrumOffsetX / (PICKER_WIDTH.withDensity())) * 100).toInt()
+                                    activeSaturation = (clampFloat(spectrumOffsetX / (PICKER_WIDTH.withDensity())) * 100).toInt()
                                     spectrumOffsetY += dragAmount.y
-                                    activeBrightness =
-                                        (clampFloat(1f - spectrumOffsetY / (SPECTRUM_HEIGHT.withDensity())) * 100).toInt()
+                                    activeBrightness = (clampFloat(1f - spectrumOffsetY / (SPECTRUM_HEIGHT.withDensity())) * 100).toInt()
+                                    updateRGB()
                                 }
                             )
                         }
@@ -205,6 +236,7 @@ fun ColorPicker(
                         ),
                         onValueChange = {
                             activeHue = (it * 360).toInt()
+                            updateRGB()
                         }
                     )
 
@@ -228,35 +260,111 @@ fun ColorPicker(
 
             Row(
                 Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
+                    val smallLabelWidth = Modifier.weight(1f)
+                    val textStyle = MaterialTheme.typography.caption.copy(textAlign = TextAlign.Center)
+
+                    Text(
+                        text = "A%",
+                        style = textStyle,
+                        modifier = smallLabelWidth
+                    )
+                    Row(
+                        Modifier
+                            .weight(3f)
+                            .padding(vertical = 2.dp)
+                            .border(1.dp, Color.Gray, RoundedCornerShape(2.dp))
+                            .clickable {
+                                displayInRGB = !displayInRGB
+                            }
+                    ) {
+                        val labels = if (displayInRGB) "RGB" else "HSV"
+                        labels.forEach {
+                            Text(
+                                text = it.toString(),
+                                style = textStyle,
+                                modifier = smallLabelWidth
+                            )
+                        }
+                    }
+                    Text(
+                        text = "Hex",
+                        style = textStyle,
+                        modifier = Modifier.weight(2f)
+                    )
+                }
+            }
+            Spacer(Modifier.height(2.dp))
+            Row(
+                Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
+                val smallInputWidth = Modifier.weight(1f)
                 TextInput(
-                    modifier = Modifier.weight(1f),
+                    modifier = smallInputWidth,
                     value = activeOpacity,
                     convert = { it.toIntOrNull() }
                 ) {
                     activeOpacity = clampInt(it ?: activeOpacity, 0, 100)
                 }
                 TextInput(
-                    modifier = Modifier.weight(1f),
-                    value = activeHue,
+                    modifier = smallInputWidth,
+                    value = if (displayInRGB) activeRed else activeHue,
                     convert = { it.toIntOrNull() }
                 ) {
-                    activeHue = clampInt(it ?: activeHue, max = 360)
+                    if (displayInRGB) {
+                        activeRed = clampInt(it ?: activeRed, max = 255)
+                        updateHSV()
+                    } else {
+                        activeHue = clampInt(it ?: activeHue, max = 360)
+                        updateRGB()
+                    }
                 }
                 TextInput(
-                    modifier = Modifier.weight(1f),
-                    value = activeSaturation,
+                    modifier = smallInputWidth,
+                    value = if (displayInRGB) activeGreen else activeSaturation,
                     convert = { it.toIntOrNull() }
                 ) {
-                    activeSaturation = clampInt(it ?: activeSaturation)
+                    if (displayInRGB) {
+                        activeGreen = clampInt(it ?: activeGreen, max = 255)
+                        updateHSV()
+                    } else {
+                        activeSaturation = clampInt(it ?: activeSaturation)
+                        updateRGB()
+                    }
                 }
                 TextInput(
-                    modifier = Modifier.weight(1f),
-                    value = activeBrightness,
+                    modifier = smallInputWidth,
+                    value = if (displayInRGB) activeBlue else activeBrightness,
                     convert = { it.toIntOrNull() }
                 ) {
-                    activeBrightness = clampInt(it ?: activeBrightness)
+                    if (displayInRGB) {
+                        activeBlue = clampInt(it ?: activeBlue, max = 255)
+                        updateHSV()
+                    } else {
+                        activeBrightness = clampInt(it ?: activeBrightness)
+                        updateRGB()
+                    }
+                }
+                TextInput(
+                    modifier = Modifier.weight(2f),
+                    value = activeColor.asHex,
+                    convert = {
+                        var hex = it
+                        if (it.length == 8) {
+                            hex = it.substring(2 until it.length) + it.substring(0 until 2)
+                        }
+                        hex
+                    }
+                ) {
+                    val (h, s, v, a) = RGB(it).toHSV()
+                    activeHue = h
+                    activeSaturation = s
+                    activeBrightness = v
+                    activeOpacity = (a * 100).toInt()
                 }
             }
         }
@@ -266,7 +374,7 @@ fun ColorPicker(
         Spacer(Modifier.height(16.dp))
         fun toBaseTwo(fl: Float): Int { return (fl * 255).roundToInt() }
         Text("${toBaseTwo(activeColor.red)}, ${toBaseTwo(activeColor.green)}, ${toBaseTwo(activeColor.blue)}, ${activeColor.alpha}")
-        //Text("$activeHue")
+        Text("$activeHue")
         Text("$activeSaturation")
         Text("$activeBrightness")
         //Text("$activeOpacity")
