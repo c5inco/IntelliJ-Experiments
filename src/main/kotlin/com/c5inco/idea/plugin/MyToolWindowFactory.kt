@@ -9,9 +9,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.c5inco.idea.apps.colorpicker.ColorPicker
-import com.c5inco.idea.utils.WithoutTouchSlop
-import com.c5inco.idea.apps.lafdefaults.LafDefaults
+import com.c5inco.idea.apps.rotatingglobe.RotatingGlobe
 import com.c5inco.idea.plugin.intellij.SwingColors
+import com.c5inco.idea.utils.WithoutTouchSlop
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder
@@ -63,11 +63,8 @@ class MyToolWindowFactory : ToolWindowFactory, DumbAware {
                         color = Color(bgColor.red, bgColor.green, bgColor.blue)
                     ) {
                         Column {
-                            // Spacer(Modifier.height(32.dp))
-                            // Button(onClick = { showPopup() }) {
-                            //     Text("color picker")
-                            // }
-                            LafDefaults(swingColors.isDarcula)
+                            // LafDefaults(swingColors.isDarcula)
+                            RotatingGlobe()
                         }
                     }
                 }
