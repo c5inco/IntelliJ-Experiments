@@ -30,8 +30,8 @@ import androidx.compose.ui.unit.dp
 import com.c5inco.idea.components.TextInput
 import com.c5inco.idea.utils.WithoutTouchSlop
 import com.c5inco.idea.utils.asHex
-import com.c5inco.idea.utils.clampInt
 import com.c5inco.idea.utils.clampFloat
+import com.c5inco.idea.utils.clampInt
 import com.github.ajalt.colormath.HSV
 import com.github.ajalt.colormath.RGB
 import kotlin.math.roundToInt
@@ -304,16 +304,17 @@ fun ColorPicker(
                 TextInput(
                     modifier = smallInputWidth,
                     value = if (displayInRGB) activeRed else activeHue,
-                    convert = { it.toIntOrNull() }
-                ) {
-                    if (displayInRGB) {
-                        activeRed = clampInt(it ?: activeRed, max = 255)
-                        updateHSV()
-                    } else {
-                        activeHue = clampInt(it ?: activeHue, max = 360)
-                        updateRGB()
+                    convert = { it.toIntOrNull() },
+                    onValueChange = {
+                        if (displayInRGB) {
+                            activeRed = clampInt(it ?: activeRed, max = 255)
+                            updateHSV()
+                        } else {
+                            activeHue = clampInt(it ?: activeHue, max = 360)
+                            updateRGB()
+                        }
                     }
-                }
+                )
                 TextInput(
                     modifier = smallInputWidth,
                     value = if (displayInRGB) activeGreen else activeSaturation,
