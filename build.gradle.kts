@@ -4,8 +4,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("org.jetbrains.intellij") version "0.6.5"
-    kotlin("jvm") version "1.4.30"
-    id("org.jetbrains.compose") version "0.3.0"
+    kotlin("jvm") version "1.4.31"
+    id("org.jetbrains.compose") version "0.3.2"
 }
 
 group = "me.c5inco"
