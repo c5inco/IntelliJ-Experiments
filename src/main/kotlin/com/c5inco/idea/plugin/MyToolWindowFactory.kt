@@ -8,6 +8,7 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.c5inco.idea.apps.colorpicker.ColorPicker
 import com.c5inco.idea.apps.lafdefaults.LafDefaults
 import com.c5inco.idea.apps.rotatingglobe.RotatingGlobe
@@ -22,7 +23,6 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.JBUI
-import java.awt.Dimension
 import javax.swing.JComponent
 
 
@@ -41,9 +41,18 @@ class MyToolWindowFactory : ToolWindowFactory, DumbAware {
         val contentFactory = ContentFactory.SERVICE.getInstance()
         //val laf = contentFactory.createContent(createLafPanel(), "Laf Defaults", false)
         toolWindow.contentManager.addContent(
-            contentFactory.createContent(createLafPanel(), "Laf Defaults", false))
+            contentFactory.createContent(createComposeComponent { LafDefaults(it) }, "Laf Defaults", false))
         toolWindow.contentManager.addContent(
-            contentFactory.createContent(createGlobalPanel(), "Rotating Globe", false))
+            contentFactory.createContent(createComposeComponent { RotatingGlobe() }, "Rotating Globe", false))
+        toolWindow.contentManager.addContent(
+            contentFactory.createContent(
+                createComposeComponent {
+                    Column(
+                        Modifier.size(width = 240.dp, height = 450.dp)
+                    ) {
+                        ColorPicker()
+                    }
+                }, "Color Picker", false))
     }
 
     fun createLafPanel(): JComponent {
@@ -124,12 +133,29 @@ class MyToolWindowFactory : ToolWindowFactory, DumbAware {
         popup.showCenteredInCurrentWindow(_project)
     }
 
-    fun createComposeComponent(content: @Composable () -> Unit): JComponent {
+    fun createComposeComponent(content: @Composable (isDarkTheme: Boolean) -> Unit): JComponent {
         return ComposePanel().apply {
-            preferredSize = Dimension(150, 300)
             setContent {
                 Thread.currentThread().contextClassLoader = PluginAction::class.java.classLoader
-                content()
+                val bgColor = JBUI.CurrentTheme.NewClassDialog.panelBackground()
+                val swingColors = SwingColors()
+                val appColors = if (swingColors.isDarcula) darkColors() else lightColors()
+
+                DesktopMaterialTheme(colors =
+                    appColors.copy(
+                        background = swingColors.background,
+                        onBackground = swingColors.onBackground,
+                        surface = swingColors.surface,
+                        onSurface = swingColors.onSurface
+                    )
+                ) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = Color(bgColor.red, bgColor.green, bgColor.blue)
+                    ) {
+                        content(swingColors.isDarcula)
+                    }
+                }
             }
         }
     }
