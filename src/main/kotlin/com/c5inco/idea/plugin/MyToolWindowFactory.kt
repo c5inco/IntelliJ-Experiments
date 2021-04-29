@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.c5inco.idea.apps.colorpicker.ColorPicker
+import com.c5inco.idea.apps.lafdefaults.LafDefaults
 import com.c5inco.idea.apps.rotatingglobe.RotatingGlobe
 import com.c5inco.idea.plugin.intellij.SwingColors
 import com.c5inco.idea.utils.WithoutTouchSlop
@@ -38,11 +39,14 @@ class MyToolWindowFactory : ToolWindowFactory, DumbAware {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         _project = project
         val contentFactory = ContentFactory.SERVICE.getInstance()
-        val content = contentFactory.createContent(createCenterPanel(), "", false)
-        toolWindow.contentManager.addContent(content)
+        //val laf = contentFactory.createContent(createLafPanel(), "Laf Defaults", false)
+        toolWindow.contentManager.addContent(
+            contentFactory.createContent(createLafPanel(), "Laf Defaults", false))
+        toolWindow.contentManager.addContent(
+            contentFactory.createContent(createGlobalPanel(), "Rotating Globe", false))
     }
 
-    fun createCenterPanel(): JComponent {
+    fun createLafPanel(): JComponent {
         return ComposePanel().apply {
             setContent {
                 Thread.currentThread().contextClassLoader = PluginAction::class.java.classLoader
@@ -63,7 +67,35 @@ class MyToolWindowFactory : ToolWindowFactory, DumbAware {
                         color = Color(bgColor.red, bgColor.green, bgColor.blue)
                     ) {
                         Column {
-                            // LafDefaults(swingColors.isDarcula)
+                            LafDefaults(swingColors.isDarcula)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun createGlobalPanel(): JComponent {
+        return ComposePanel().apply {
+            setContent {
+                Thread.currentThread().contextClassLoader = PluginAction::class.java.classLoader
+                val bgColor = JBUI.CurrentTheme.NewClassDialog.panelBackground()
+                val swingColors = SwingColors()
+                val appColors = if (swingColors.isDarcula) darkColors() else lightColors()
+
+                DesktopMaterialTheme(colors =
+                    appColors.copy(
+                        background = swingColors.background,
+                        onBackground = swingColors.onBackground,
+                        surface = swingColors.surface,
+                        onSurface = swingColors.onSurface
+                    )
+                ) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = Color(bgColor.red, bgColor.green, bgColor.blue)
+                    ) {
+                        Column {
                             RotatingGlobe()
                         }
                     }
